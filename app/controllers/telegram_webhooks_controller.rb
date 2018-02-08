@@ -19,6 +19,24 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     end
   end
 
+  def task_list
+    Task.all
+  end
+
+  def add_task(*args)
+    if args.any?
+      @task = Task.create(description: args)
+      if @task.save
+        respond_with :message, text: 'Задача добавлена'
+      else
+        respond_with :message, text: 'Задача не может быть добавлена'
+      end
+    else
+      respond_with :message, text: 'Напишите вашу задачу'
+      save_context :add_task
+    end
+  end
+
   def memo(*args)
     if args.any?
       session[:memo] = args.join(' ')
