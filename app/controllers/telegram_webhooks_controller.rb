@@ -25,7 +25,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def add_task(*args)
     if args.any?
-      @task = Task.create(description: args)
+      @task = Task.create(description: args, user_id: user_params['id'])
       if @task.save
         respond_with :message, text: 'Задача добавлена'
       else
