@@ -10,6 +10,15 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     respond_with :message, text: t('.content')
   end
 
+  def init
+    @user = User.create(user_params)
+    if @user.save
+      respond_with :message, text: 'Приятно познакомиться'
+    else
+      respond_with :message, text: 'Вам не нужно вводить больше эту комманду. Ведь мы уже знакомы'
+    end
+  end
+
   def memo(*args)
     if args.any?
       session[:memo] = args.join(' ')
@@ -104,4 +113,11 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       respond_with :message, text: t('telegram_webhooks.action_missing.feature', action: action)
     end
   end
+
+  private
+
+  def user_params
+    self.from.except!("is_bot", "language_code")
+  end
+
 end
