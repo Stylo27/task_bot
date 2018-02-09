@@ -26,8 +26,8 @@ en:
       description: Description
     keyboard:
       buttons:
-        - /init
-        - Ipsum
+        - /list
+        - /add
         - /cancel
       prompt: 'Select something with keyboard:'
       selected: "You've selected: %{value}"

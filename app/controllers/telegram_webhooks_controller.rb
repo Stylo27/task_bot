@@ -3,39 +3,47 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   context_to_action!
 
   def start(*)
-    respond_with :message, text: t('.content')
+    @user = User.create(user_params)
+    if @user.save
+      respond_with :message, text: t('.content')
+    end
   end
 
   def help(*)
     respond_with :message, text: t('.content')
   end
 
-  def init
-    @user = User.create(user_params)
-    if @user.save
-      respond_with :message, text: 'Приятно познакомиться'
+  def list
+    @tasks = Task.all
+    if @tasks.any?
+      response_text = "Активные задачи:\n"
+      @tasks.find_each.with_index do |task, index|
+        response_text += "\n#{index+1}) #{task.description}\n"
+      end
+      respond_with :message, text: response_text, reply_markup: {
+        inline_keyboard: [
+          [{text: 'Delete', callback_data: 'choose'}]
+        ]
+      }
     else
-      respond_with :message, text: 'Вам не нужно вводить больше эту комманду. Ведь мы уже знакомы'
+      response_with :message, text: 'У вас нет задач'
     end
   end
 
-  def task_list
-    Task.all
-  end
-
-  def add_task(*args)
+  def add(*args)
     if args.any?
-      @task = Task.create(description: args, user_id: user_params['id'])
+      @task = Task.create(description: args.join(" "), user_id: user_params['id'])
       if @task.save
-        respond_with :message, text: 'Задача добавлена'
+        respond_with :message, text: 'Задача записана'
       else
-        respond_with :message, text: 'Задача не может быть добавлена'
+        respond_with :message, text: 'Задача не может быть записана'
       end
     else
       respond_with :message, text: 'Напишите вашу задачу'
-      save_context :add_task
+      save_context :add
     end
   end
+
 
   def memo(*args)
     if args.any?
@@ -67,23 +75,24 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     end
   end
 
-  def inline_keyboard
-    respond_with :message, text: t('.prompt'), reply_markup: {
-      inline_keyboard: [
-        [
-          {text: t('.alert'), callback_data: 'alert'},
-          {text: t('.no_alert'), callback_data: 'no_alert'},
-        ],
-        [{text: t('.repo'), url: 'https://github.com/telegram-bot-rb/telegram-bot'}],
-      ],
-    }
-  end
+  # def inline_keyboard
+  #   respond_with :message, text: t('.prompt'), reply_markup: {
+  #     inline_keyboard: [
+  #       [
+  #         {text: t('.alert'), callback_data: 'alert'},
+  #         {text: t('.no_alert'), callback_data: 'no_alert'},
+  #       ],
+  #       [{text: t('.repo'), url: 'https://github.com/telegram-bot-rb/telegram-bot'}],
+  #     ],
+  #   }
+  # end
 
   def callback_query(data)
-    if data == 'alert'
-      answer_callback_query t('.alert'), show_alert: true
+    if data == 'choose'
+      return
     else
-      answer_callback_query t('.no_alert')
+      binding.pry
+      Task.all[data].delete
     end
   end
 
